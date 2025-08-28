@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker Login</title>
+</head>
+<body>
+
+    <h1>Finance Tracker</h1>
+
+    <h2>Login</h2>
+    <form action="/login" method="post">
+        <div>
+            <label for="login-username">Username:</label>
+            <input type="text" id="login-username" name="username" required>
+        </div>
+        <div>
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password" name="password" required>
+        </div>
+        <button type="submit">Log In</button>
+    </form>
+    
+    <p>Don't have an account? <a href="/register">Register here</a></p>
+
+</body>
+</html>
