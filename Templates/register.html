@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker - Registration</title>
+    <title>Finance Tracker - Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styling.css') }}">
 </head>
 <body>
 
-    <h1>Fnance Tracker</h1>
+    <h1>Finance Tracker</h1>
 
     <h2>Register</h2>
     <form action="/register" method="post">
@@ -18,11 +19,18 @@
         <div>
             <label for="register-password">Password:</label>
             <input type="password" id="register-password" name="password" required>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="error-message">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         </div>
         <button type="submit">Sign Up</button>
     </form>
     
-    <p>Already have an account? <a href="/login">Login here</a></p>
+    <p>Already have an account? <a href="/login">Log in here</a></p>
 
 </body>
 </html>
