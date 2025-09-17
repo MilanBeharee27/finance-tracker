@@ -3,5 +3,62 @@
     color: rgb(255, 0, 0);
 }
 .welcome-heading{
-    color: rgb(2, 2, 2);
+    color: rgb(255, 0, 0);
 }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6;
+    color: #f6f8fa;
+    transition-property: background-color, color;
+    transition-duration: 300ms;
+}
+
+body.dark {
+    background-color: #111827;
+    color: #d1d5db;
+}
+
+    .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+   .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .modal-buttons {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .budget-progress-green { background-color: #10b981; }
+        .budget-progress-yellow { background-color: #f59e0b; }
+        .budget-progress-red { background-color: #ef4444; }

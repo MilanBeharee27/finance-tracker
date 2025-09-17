@@ -3,85 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Dashboard | Personal Finance Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+   
 </head>
-<body>
+<body class="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
 
-    <h1>Dashboard</h1>
-    <h2>Hello, {{ username }}!</h2>
-    <a href="{{ url_for('logout') }}">Logout</a>
-
-    <hr>
-
-    <h2>Add a new Transaction</h2>
+    <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div style="padding: 10px; border: 1px solid; margin-bottom: 10px; border-color: {% if category == 'success' %}green{% else %}red{% endif %}; color: {% if category == 'success' %}green{% else %}red{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <form action="{{ url_for('add_transaction') }}" method="post">
-        <div>
-            <label for="amount">Amount:</label>
-            <input type="number" id="amount" name="amount" step="0.01" required>
+    {% if messages %}
+    <div class="px-6 py-4 fixed inset-x-0 top-0 z-50">
+        {% for category, message in messages %}
+        <div class="p-4 rounded-lg shadow-lg {% if category == 'success' %}bg-green-500 text-white{% elif category == 'error' %}bg-red-500 text-white{% else %}bg-blue-500 text-white{% endif %}">
+            {{ message }}
         </div>
-        <div>
-            <label for="type">Type:</label>
-            <select id="type" name="type" required>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-            </select>
-        </div>
-        <div>
-            <label for="description">Description:</label>
-            <input type="text" id="description" name="description" required>
-        </div>
-        <div>
-            <label for="transaction_date">Date:</label>
-            <input type="date" id="transaction_date" name="transaction_date" required>
-        </div>
-        <button type="submit">Add Transaction</button>
-    </form>
-
-    <hr>
-
-    <h2>Your Transactions</h2>
-    {% if transactions %}
-        <table border="1" cellpadding="5" cellspacing="0" style="width:100%;">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for transaction in transactions %}
-                <tr>
-                    <td>{{ transaction.transaction_date.strftime('%Y-%m-%d') }}</td>
-                    <td>{{ transaction.description }}</td>
-                    <td style="color: {% if transaction.type == 'income' %}green{% else %}red{% endif %}">
-                        {{ transaction.type|capitalize }}
-                    </td>
-                    <td style="color: {% if transaction.type == 'income' %}green{% else %}red{% endif %}">
-                        {{ 'R {:,.2f}'.format(transaction.amount) }}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('edit_transaction', transaction_id=transaction.transaction_id) }}">Edit</a> |
-                        <a href="{{ url_for('delete_transaction', transaction_id=transaction.transaction_id) }}">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No transactions added yet.</p>
+        {% endfor %}
+    </div>
     {% endif %}
+    {% endwith %}
 
+    <!-- SEARCH NAV -->
+    <nav class="bg-white dark:bg-gray-800 shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-2xl font-bold text-blue-600 dark:text-blue-400">THE FINANCE TRACKER</h1>
+            <a href="{{ url_for('dashboard') }}" class="py-2 px-3 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="py-2 px-3 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Categories</a>
+        </div>
+        <div class="flex items-center space-x-4">
+            <p class="text-sm">Welcome, <span class="font-semibold">{{ username }}</span>!</p>
+            <a href="{{ url_for('logout') }}" class="py-2 px-4 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6 flex-1">
+
+        <!-- Totals Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col items-center">
+                <h3 class="text-xl font-semibold mb-2">Total Balance</h3>
+                <p class="text-4xl font-bold text-blue-500">R{{ "%.2f"|format(total_balance) }}</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col items-center">
+                <h3 class="text-xl font-semibold mb-2">Total Income</h3>
+                <p class="text-4xl font-bold text-green-500">R{{ "%.2f"|format(total_income) }}</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 flex flex-col items-center">
+                <h3 class="text-xl font-semibold mb-2">Total Expenses</h3>
+                <p class="text-4xl font-bold text-red-500">R{{ "%.2f"|format(total_expenses) }}</p>
+            </div>
+        </div>
+
+        <!-- Add Transaction Form -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Add a New Transaction</h2>
+            <form action="{{ url_for('add_transaction') }}" method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="amount" class="block text-sm font-medium">Amount</label>
+                        <input type="number" step="0.01" id="amount" name="amount" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                    </div>
+                    <div>
+                        <label for="type" class="block text-sm font-medium">Type</label>
+                        <select id="type" name="type" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="category_id" class="block text-sm font-medium">Category</label>
+                        <select id="category_id" name="category_id" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                            <option value="">No Category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.category_id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="transaction_date" class="block text-sm font-medium">Date</label>
+                        <input type="date" id="transaction_date" name="transaction_date" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                    </div>
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium">Description</label>
+                    <input type="text" id="description" name="description" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">Add Transaction</button>
+            </form>
+        </div>
+
+        <!-- Budget Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Set a Monthly Budget</h2>
+            <form action="{{ url_for('set_budget') }}" method="post" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="budget_category_id" class="block text-sm font-medium">Category</label>
+                        <select id="budget_category_id" name="category_id" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                            {% for category in categories %}
+                            <option value="{{ category.category_id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="budget_amount" class="block text-sm font-medium">Budget Amount</label>
+                        <input type="number" step="0.01" id="budget_amount" name="budget_amount" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                    </div>
+                    <div>
+                        <label for="budget_start_date" class="block text-sm font-medium">Start Date</label>
+                        <input type="date" id="budget_start_date" name="budget_start_date" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm bg-gray-50 dark:bg-gray-700 px-3 py-2">
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors">Set Budget</button>
+            </form>
+        </div>
+
+        <!-- Your Budgets Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Your Budgets</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Budget</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Start Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">End Date</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for budget in budgets %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ budget.category_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">R{{ "%.2f"|format(budget.amount) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ budget.start_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ budget.end_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <a href="{{ url_for('edit_budget', budget_id=budget.budget_id) }}" class="text-blue-600 hover:text-blue-900 transition-colors">Edit</a>
+                                <button class="text-red-600 hover:text-red-900 transition-colors" data-modal-target="confirmModal" data-modal-message="Are you sure you want to delete this budget?" data-href="{{ url_for('delete_budget', budget_id=budget.budget_id) }}" onclick="openConfirmModal(this)">Delete</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No budgets found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Transaction Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Your Transactions</h2>
+                <form action="{{ url_for('dashboard') }}" method="get" class="flex items-center space-x-2">
+                    <input type="text" name="q" placeholder="Search by description or category" value="{{ search_query if search_query else '' }}" class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="py-2 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">Search</button>
+                    <a href="{{ url_for('dashboard') }}" class="py-2 px-4 rounded-lg bg-gray-300 text-gray-800 font-semibold hover:bg-gray-400 transition-colors">Reset</a>
+                </form>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ transaction.transaction_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ transaction.description }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if transaction.type == 'income' %}text-green-500{% else %}text-red-500{% endif %}">R{{ "%.2f"|format(transaction.amount) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if transaction.type == 'income' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{{ transaction.type.capitalize() }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">{{ transaction.category_name or 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <a href="{{ url_for('edit_transaction', transaction_id=transaction.transaction_id) }}" class="text-blue-600 hover:text-blue-900 transition-colors">Edit</a>
+                                <button class="text-red-600 hover:text-red-900 transition-colors" data-modal-target="confirmModal" data-modal-message="Are you sure you want to delete this transaction?" data-href="{{ url_for('delete_transaction', transaction_id=transaction.transaction_id) }}" onclick="openConfirmModal(this)">Delete</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No transactions found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold mb-2">Confirm Deletion</h3>
+            <p id="modalMessage"></p>
+            <div class="modal-buttons">
+                <button id="cancelButton" class="py-2 px-4 rounded-lg bg-gray-300 text-gray-800 font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
+                <a id="confirmButton" href="#" class="py-2 px-4 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors">Delete</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openConfirmModal(button) {
+            const modal = document.getElementById('confirmModal');
+            const message = button.getAttribute('data-modal-message');
+            const href = button.getAttribute('data-href');
+            
+            document.getElementById('modalMessage').innerText = message;
+            document.getElementById('confirmButton').href = href;
+
+            modal.style.display = 'flex';
+
+            document.getElementById('cancelButton').onclick = function() {
+                modal.style.display = 'none';
+            };
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+    
+    <footer class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+        404 Solutions 
+    </footer>
 </body>
 </html>
